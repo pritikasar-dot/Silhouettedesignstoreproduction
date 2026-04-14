@@ -1,0 +1,13 @@
+TestCase,Status,ExecutionTime(ms),StartTime
+HomePage : Verify navigation to homepage via logo,PASSED,1872,Tue Apr 14 18:45:12 IST 2026
+Search Functionality : Verify search with invalid term and display search result message,PASSED,6854,Tue Apr 14 18:45:55 IST 2026
+Shopping Cart : Clear shopping cart if items exist,PASSED,28459,Tue Apr 14 18:46:26 IST 2026
+HomePage : Verify the homepage logo,PASSED,67,Tue Apr 14 18:45:02 IST 2026
+Product Detail Page : Verify Add to Cart functionality,PASSED,1,Tue Apr 14 18:46:14 IST 2026
+Verify SignIn button presence,PASSED,15,Tue Apr 14 18:45:21 IST 2026
+Login with valid credentials,PASSED,3830,Tue Apr 14 18:45:27 IST 2026
+Login with invalid credentials,PASSED,1324,Tue Apr 14 18:45:37 IST 2026
+HomePage : Verify the homepage title,PASSED,11,Tue Apr 14 18:45:07 IST 2026
+Search Functionality :Verify search with valid term and display first 5 product name,PASSED,6814,Tue Apr 14 18:45:43 IST 2026
+Product Detail page : Verify product title, SKU, and price,PASSED,144,Tue Apr 14 18:46:14 IST 2026
+Product listing page (New): Fetch product links and append in the excelsheet,FAILED,6427,Tue Apr 14 18:46:54 IST 2026

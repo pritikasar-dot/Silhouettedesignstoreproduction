@@ -1,0 +1,14 @@
+TestCase,Status,ExecutionTime(ms),StartTime
+HomePage : Verify the homepage title,PASSED,24,Mon Apr 06 11:09:15 IST 2026
+HomePage : Verify the homepage logo,PASSED,161,Mon Apr 06 11:09:00 IST 2026
+HomePage : Verify navigation to homepage via logo,PASSED,1963,Mon Apr 06 11:09:27 IST 2026
+Subscription : Purchase Subscription Plan with saved card.,FAILED,42928,Mon Apr 06 11:13:20 IST 2026
+Credit Boost : Purchase Bronze Credit Boost with coupon code and saved,SKIPPED,0,Mon Apr 06 11:12:53 IST 2026
+Login : Verify Login popup with valid credentials,SKIPPED,0,Mon Apr 06 11:10:10 IST 2026
+Search Functionality : Verify search with invalid term and display search result message,SKIPPED,0,Mon Apr 06 11:10:51 IST 2026
+Login : Verify Login popup with invalid credentials,SKIPPED,1,Mon Apr 06 11:10:10 IST 2026
+Product Detail Page : Verify Add to Cart functionality,SKIPPED,0,Mon Apr 06 11:11:32 IST 2026
+Login : Verify SignIn element presence,SKIPPED,0,Mon Apr 06 11:10:10 IST 2026
+Product Detail page : Verify product title, SKU, and price,SKIPPED,0,Mon Apr 06 11:11:31 IST 2026
+Shopping Cart : Clear shopping cart if items exist,SKIPPED,0,Mon Apr 06 11:12:12 IST 2026
+Search Functionality :Verify search with valid term and display first 5 product name,SKIPPED,0,Mon Apr 06 11:10:51 IST 2026

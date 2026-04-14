@@ -1,0 +1,15 @@
+TestCase,Status,ExecutionTime(ms),StartTime
+Login with valid credentials,PASSED,6685,Tue Apr 14 18:31:32 IST 2026
+HomePage : Verify the homepage title,PASSED,8,Tue Apr 14 18:31:11 IST 2026
+Verify SignIn button presence,PASSED,29,Tue Apr 14 18:31:25 IST 2026
+Product Detail page : Verify product title, SKU, and price,PASSED,122,Tue Apr 14 18:32:32 IST 2026
+HomePage : Verify the homepage logo,PASSED,39,Tue Apr 14 18:31:06 IST 2026
+Shopping Cart : Clear shopping cart if items exist,PASSED,27914,Tue Apr 14 18:32:43 IST 2026
+Login with invalid credentials,PASSED,1682,Tue Apr 14 18:31:56 IST 2026
+Search Functionality :Verify search with valid term and display first 5 product name,PASSED,7372,Tue Apr 14 18:32:03 IST 2026
+Search Functionality : Verify search with invalid term and display search result message,PASSED,6830,Tue Apr 14 18:32:15 IST 2026
+Product Detail Page : Verify Add to Cart functionality,PASSED,1,Tue Apr 14 18:32:32 IST 2026
+Subscription : Purchase Subscription Plan with saved card.,FAILED,252461,Tue Apr 14 18:33:34 IST 2026
+HomePage : Verify navigation to homepage via logo,FAILED,2307,Tue Apr 14 18:31:16 IST 2026
+Credit Boost : Purchase Bronze Credit Boost with coupon code and saved,FAILED,147773,Tue Apr 14 18:38:06 IST 2026
+Product listing page (New): Fetch product links and append in the excelsheet,FAILED,6966,Tue Apr 14 18:33:11 IST 2026

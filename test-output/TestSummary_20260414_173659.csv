@@ -1,0 +1,12 @@
+TestCase,Status,ExecutionTime(ms),StartTime
+Login with invalid credentials,PASSED,1138,Tue Apr 14 17:35:37 IST 2026
+Search Functionality :Verify search with valid term and display first 5 product name,PASSED,4161,Tue Apr 14 17:35:44 IST 2026
+Verify SignIn button presence,PASSED,26,Tue Apr 14 17:34:59 IST 2026
+HomePage : Verify the homepage title,PASSED,10,Tue Apr 14 17:34:45 IST 2026
+HomePage : Verify the homepage logo,PASSED,55,Tue Apr 14 17:34:40 IST 2026
+Search Functionality : Verify search with invalid term and display search result message,PASSED,7309,Tue Apr 14 17:35:55 IST 2026
+Shopping Cart : Clear shopping cart if items exist,FAILED,28428,Tue Apr 14 17:36:30 IST 2026
+HomePage : Verify navigation to homepage via logo,FAILED,1778,Tue Apr 14 17:34:51 IST 2026
+Login with valid credentials,FAILED,6937,Tue Apr 14 17:35:12 IST 2026
+Product Detail page : Verify product title, SKU, and price,SKIPPED,0,Tue Apr 14 17:36:18 IST 2026
+Product Detail Page : Verify Add to Cart functionality,SKIPPED,0,Tue Apr 14 17:36:18 IST 2026
