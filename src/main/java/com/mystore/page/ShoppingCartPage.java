@@ -2,7 +2,9 @@ package com.mystore.page;
 import java.time.Duration;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -22,8 +24,11 @@ public class ShoppingCartPage {
     }
 
     public void navigateToCart() {
-        driver.get("https://silhouettedesignstore.com/checkout/cart/");
-    }
+driver.navigate().to("https://www.silhouettedesignstore.com/checkout/cart/");
+
+    new WebDriverWait(driver, Duration.ofSeconds(10))
+            .until(driver -> ((JavascriptExecutor) driver)
+                    .executeScript("return document.readyState").equals("complete"));    }
 
     public boolean isCartEmpty() {
         return driver.findElements(emptyCartMsg1).size() > 0 ||
@@ -31,28 +36,31 @@ public class ShoppingCartPage {
     }
 
     public void clearCartIfNotEmpty() {
+    try {
+        if (!isCartEmpty()) {
 
-        try {
-            if (!isCartEmpty()) {
+            System.out.println("🛒 Cart has items. Clearing cart...");
 
-                System.out.println("🛒 Cart has items. Clearing cart...");
+            WebElement clearBtn = wait.until(ExpectedConditions.presenceOfElementLocated(clearCartBtn));
 
-                wait.until(ExpectedConditions.elementToBeClickable(clearCartBtn)).click();
+            ((JavascriptExecutor) driver)
+                    .executeScript("arguments[0].scrollIntoView(true);", clearBtn);
 
-                // Wait until cart becomes empty
-                wait.until(ExpectedConditions.or(
-                        ExpectedConditions.visibilityOfElementLocated(emptyCartMsg1),
-                        ExpectedConditions.visibilityOfElementLocated(emptyCartMsg2)
-                ));
+            wait.until(ExpectedConditions.elementToBeClickable(clearBtn)).click();
 
-                System.out.println("✅ Cart cleared successfully.");
-            } else {
-                System.out.println("ℹ️ Cart already empty.");
-            }
+            wait.until(ExpectedConditions.or(
+                    ExpectedConditions.visibilityOfElementLocated(emptyCartMsg1),
+                    ExpectedConditions.visibilityOfElementLocated(emptyCartMsg2)
+            ));
 
-        } catch (Exception e) {
-            System.out.println("⚠️ Failed to clear cart: " + e.getMessage());
-            throw e;
+            System.out.println("✅ Cart cleared successfully.");
+        } else {
+            System.out.println("ℹ️ Cart already empty.");
         }
+
+    } catch (Exception e) {
+        System.out.println("⚠️ Failed to clear cart: " + e.getMessage());
+        throw e;
     }
+}
 }

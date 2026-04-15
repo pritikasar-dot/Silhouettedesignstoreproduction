@@ -1,50 +1,34 @@
 package com.mystore.testcases;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.*;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.mystore.base.BaseClass;
 import com.mystore.page.NewDesignsPage;
-import com.mystore.utility.ExcelUtility;
+import com.mystore.utility.ProductContext;
+
 
 public class FetchProductLinksTest extends BaseClass {
 
-    private static final String EXCEL_PATH = System.getProperty("user.dir") + "/TestData/TestData.xlsx";
-    private static final String SHEET_NAME = "ProductList";
+   @Test(description = "Fetch product links and store for email")
+public void fetchProductLinks() {
 
-    @Test(description = "Product listing page (New): Fetch product links and append in the excelsheet")
-    public void fetchAndWriteProductLinks() throws Exception {
-        // 1️⃣ Launch site (URL from Config.properties)
-        launchApp();
+    launchApp();
+    getDriver().get("https://www.silhouettedesignstore.com/new.html");
 
-        // 2️⃣ Navigate to New Designs Page
-        getDriver().get("https://www.silhouettedesignstore.com/new.html");
-        NewDesignsPage newDesigns = new NewDesignsPage();
+    NewDesignsPage page = new NewDesignsPage();
 
-        // 3️⃣ Fetch product links
-        List<String> links = newDesigns.getAllProductLinks();
+    List<String> links = page.getAllProductLinks();
 
-        // Print them in console
-        System.out.println("🟩 Found " + links.size() + " product links:");
-        for (String link : links) {
-            System.out.println(link);
-        }
+    Assert.assertTrue(links.size() > 0, "❌ No product links found!");
 
-        // 4️⃣ Convert to format suitable for ExcelUtility
-        List<String[]> dataToWrite = new ArrayList<>();
-        dataToWrite.add(new String[] {"Product Links"}); // Header
-        for (String link : links) {
-            dataToWrite.add(new String[] {link});
-        }
+    // ✅ Store links for email
+    ProductContext.addLinks(links);
 
-        // 6️⃣ Write new product links
-        ExcelUtility.writeProductData(EXCEL_PATH, SHEET_NAME, dataToWrite);
-    }
+    System.out.println("✅ Stored " + links.size() + " product links.");
+}
+    
 }

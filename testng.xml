@@ -5,6 +5,8 @@
     <listeners>
         <listener class-name="listeners.ExtentTestListener"/>
         <listener class-name="listeners.ReportEmailTrigger"/>
+        <listener class-name="listeners.RetryListener"/>
+
     </listeners>
 
     <test name="Sanity Tests">
@@ -14,6 +16,7 @@
             <class  name="com.mystore.testcases.SearchTest"/>
             <class  name="com.mystore.testcases.ProductPageTest"/>
             <class  name="com.mystore.testcases.ClearShoppingCartTest"/>
+            <class  name="com.mystore.testcases.FetchProductLinksTest"/>
 
                   
         </classes>

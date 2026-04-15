@@ -1,4 +1,0 @@
-TestCase,Status,ExecutionTime(ms),StartTime
-Subscription : Purchase Subscription Plan with saved card.,SKIPPED,0,Mon Apr 06 12:15:39 IST 2026
-Credit Boost : Purchase Bronze Credit Boost with coupon code and saved,SKIPPED,0,Mon Apr 06 12:15:17 IST 2026
-Shopping Cart : Clear shopping cart if items exist,SKIPPED,0,Mon Apr 06 12:14:56 IST 2026

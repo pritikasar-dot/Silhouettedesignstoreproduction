@@ -1,80 +1,99 @@
-/**
- * 
- */
 package com.mystore.page;
 
 import java.time.Duration;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.FindBy;
-import org.openqa.selenium.support.PageFactory;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.*;
+import org.openqa.selenium.support.*;
+import org.openqa.selenium.support.ui.*;
 
 import com.mystore.base.BaseClass;
 
-public class LoginPage extends BaseClass implements LoginAble{
+public class LoginPage extends BaseClass implements LoginAble {
+
+    WebDriverWait wait;
 
     public LoginPage() {
         PageFactory.initElements(getDriver(), this);
+        wait = new WebDriverWait(getDriver(), Duration.ofSeconds(15));
     }
 
-    @FindBy(id = "email")  // or whatever the `Email` field’s locator is on login page
+    @FindBy(id = "email")
     private WebElement emailField;
 
-    @FindBy(id = "pass") // adjust locator
+    @FindBy(id = "pass")
     private WebElement passwordField;
 
-    @FindBy(id= "send2")  // or matching page version
+    @FindBy(id = "send2")
     private WebElement signInButton;
 
     @FindBy(xpath = "//strong[@id='block-customer-login-heading']")
     private WebElement accountLink;
-    
+
     private By loginErrorMessageBy = By.xpath("//div[@data-ui-id='message-error']");
 
-   
-    @FindBy(xpath = "//div[@data-ui-id='message-error']")
-    private WebElement loginErrorMessage;
-    
-    
+    // ===== UTIL =====
+    private void waitAndSendKeys(WebElement element, String value) {
+        wait.until(ExpectedConditions.visibilityOf(element));
+        element.clear();
+        element.sendKeys(value);
+    }
+
+   private void waitAndClick(WebElement element) {
+    wait.until(ExpectedConditions.elementToBeClickable(element));
+
+    ((JavascriptExecutor) getDriver())
+            .executeScript("arguments[0].scrollIntoView(true);", element);
+
+    try {
+        element.click();
+    } catch (Exception e) {
+        // Fallback for headless
+        ((JavascriptExecutor) getDriver())
+                .executeScript("arguments[0].click();", element);
+    }
+}
+
+    // ===== ACTIONS =====
     @Override
     public void enterEmail(String email) {
-        emailField.clear();
-        emailField.sendKeys(email);
+        waitAndSendKeys(emailField, email);
     }
+
     @Override
     public void enterPassword(String pwd) {
-        passwordField.clear();
-        passwordField.sendKeys(pwd);
+        waitAndSendKeys(passwordField, pwd);
     }
+
     @Override
     public void clickSignIn() {
-        signInButton.click();
+        waitAndClick(signInButton);
     }
+
+    // ===== VALIDATIONS =====
     @Override
     public boolean isUserLoggedIn() {
         try {
+            wait.until(ExpectedConditions.visibilityOf(accountLink));
             return accountLink.isDisplayed();
         } catch (Exception e) {
             return false;
         }
     }
+
     @Override
     public boolean isSignInButtonDisplayed() {
         try {
-            return signInButton.isDisplayed();
+            return wait.until(ExpectedConditions.visibilityOf(signInButton)).isDisplayed();
         } catch (Exception e) {
             return false;
         }
     }
+
     @Override
     public boolean isErrorDisplayed() {
         try {
-            return getDriver().findElements(loginErrorMessageBy).size() > 0
-                    && getDriver().findElement(loginErrorMessageBy).isDisplayed();
+            wait.until(ExpectedConditions.visibilityOfElementLocated(loginErrorMessageBy));
+            return getDriver().findElement(loginErrorMessageBy).isDisplayed();
         } catch (Exception e) {
             return false;
         }
@@ -83,8 +102,9 @@ public class LoginPage extends BaseClass implements LoginAble{
     @Override
     public String getErrorMessageText() {
         try {
-            return getDriver().findElement(loginErrorMessageBy).getText().trim();
-        } catch (NoSuchElementException e) {
+            return wait.until(ExpectedConditions.visibilityOfElementLocated(loginErrorMessageBy))
+                    .getText().trim();
+        } catch (Exception e) {
             return "";
         }
     }
@@ -92,8 +112,8 @@ public class LoginPage extends BaseClass implements LoginAble{
     @Override
     public boolean waitForErrorDisplayed(int timeoutSeconds) {
         try {
-        	WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(timeoutSeconds));
-            wait.until(ExpectedConditions.visibilityOfElementLocated(loginErrorMessageBy));
+            new WebDriverWait(getDriver(), Duration.ofSeconds(timeoutSeconds))
+                    .until(ExpectedConditions.visibilityOfElementLocated(loginErrorMessageBy));
             return true;
         } catch (Exception e) {
             return false;

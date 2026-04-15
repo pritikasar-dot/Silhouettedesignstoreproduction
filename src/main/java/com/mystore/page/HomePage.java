@@ -13,6 +13,8 @@ import java.util.concurrent.TimeoutException;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
@@ -20,7 +22,9 @@ import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-
+import java.io.File;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
 import com.mystore.base.BaseClass;
 
 /**
@@ -52,11 +56,11 @@ public class HomePage extends BaseClass{
 	    private WebElement logo;
 
 	    // ===== IndexPage Elements =====
-	    @FindBy(css = "a.user-link-dropdown.lm")
+	    @FindBy(xpath = "//a[normalize-space()='Sign in / Register']")
 	    private WebElement signInRegisterHover;
 
-	    @FindBy(css = "a.signin_link")
-	    private WebElement signInButton;
+		@FindBy(xpath = "//a[@title='Sign In']")
+		private WebElement signInButton;
 
 	    @FindBy(css = "a[title='Register']")
 	    private WebElement registerButton;
@@ -146,40 +150,93 @@ public class HomePage extends BaseClass{
 	    }
 
 	    public LoginAble clickAndCheckLogin() {
-	        try {
-	            Actions actions = new Actions(driver);
-	            actions.moveToElement(signInRegisterHover).pause(Duration.ofMillis(1000)).perform();
 
-	            try {
-	                signInButton.click();
-	            } catch (Exception e) {
-	                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", signInButton);
-	            }
+    try {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
-	            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(8));
+        // ===== STEP 0: Handle cookie popup (important for headless) =====
+        try {
+            WebElement acceptBtn = new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.elementToBeClickable(
+                            By.xpath("//button[contains(text(),'Accept')]")
+                    ));
+            acceptBtn.click();
+            log("✅ Cookie popup handled");
+        } catch (Exception ignored) {}
 
-	            try {
-	                WebElement popup = shortWait.until(ExpectedConditions.visibilityOfElementLocated(loginPopupLocator));
-	                if (popup.isDisplayed()) {
-	                    log("✅ Login popup detected.");
-	                    return new LoginPopUp();
-	                }
-	            } catch (Exception ignored) {}
+        // ===== STEP 1: Wait for presence (NOT visibility) =====
+        wait.until(ExpectedConditions.presenceOfElementLocated(
+                By.xpath("//a[normalize-space()='Sign in / Register']")
+        ));
 
-	            if (shortWait.until(ExpectedConditions.urlContains(loginPageUrlFragment))) {
-	                log("✅ Redirected to login page.");
-	                return new LoginPage();
-	            }
+        // Scroll element
+        ((JavascriptExecutor) driver)
+                .executeScript("arguments[0].scrollIntoView({block:'center'});", signInRegisterHover);
 
-	            log("❌ Unknown state after login attempt.");
-	            throw new IllegalStateException("Neither popup nor login page detected.");
+        // ===== STEP 2: Try direct click (headless-friendly) =====
+        try {
+            signInRegisterHover.click();
+        } catch (Exception e) {
+            ((JavascriptExecutor) driver)
+                    .executeScript("arguments[0].click();", signInRegisterHover);
+        }
 
-	        } catch (Exception e) {
-	            log("❌ Error during login attempt: " + e.getMessage());
-	            throw new RuntimeException("Login flow failed", e);
-	        }
-	    }
+        // ===== STEP 3: Try hover ONLY if needed =====
+        try {
+            Actions actions = new Actions(driver);
+            actions.moveToElement(signInRegisterHover)
+                    .pause(Duration.ofMillis(500))
+                    .perform();
 
+            wait.until(ExpectedConditions.elementToBeClickable(signInButton));
+
+            ((JavascriptExecutor) driver)
+                    .executeScript("arguments[0].scrollIntoView({block:'center'});", signInButton);
+
+            try {
+                signInButton.click();
+            } catch (Exception e) {
+                ((JavascriptExecutor) driver)
+                        .executeScript("arguments[0].click();", signInButton);
+            }
+
+        } catch (Exception e) {
+            log("ℹ️ Dropdown not used, assuming direct navigation");
+        }
+
+        // ===== STEP 4: Wait for login page OR popup =====
+        WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+        shortWait.until(driver ->
+                driver.getCurrentUrl().contains(loginPageUrlFragment) ||
+                driver.findElements(loginPopupLocator).size() > 0
+        );
+
+        // ===== STEP 5: Detect state =====
+
+        // Popup case
+        try {
+            WebElement popup = driver.findElement(loginPopupLocator);
+            if (popup.isDisplayed()) {
+                log("✅ Login popup detected");
+                return new LoginPopUp();
+            }
+        } catch (Exception ignored) {}
+
+        // Page redirect
+        if (driver.getCurrentUrl().contains(loginPageUrlFragment)) {
+            log("✅ Redirected to login page");
+            return new LoginPage();
+        }
+
+        throw new IllegalStateException("❌ Login state not detected");
+
+    } catch (Exception e) {
+        takeScreenshot("login_failure");
+        log("❌ Error during login attempt: " + e.getMessage());
+        throw new RuntimeException("Login flow failed", e);
+    }
+}
 	    public Registration clickAndCheckRegisterPopup() {
 	        try {
 	            Actions actions = new Actions(driver);
@@ -254,4 +311,23 @@ public class HomePage extends BaseClass{
 	    private void log(String msg) {
 	        System.out.println(msg);
 	    }
+	@Override
+	public void takeScreenshot(String fileName) {
+	try {
+		TakesScreenshot ts = (TakesScreenshot) driver;
+		File src = ts.getScreenshotAs(OutputType.FILE);
+
+		File dest = new File(System.getProperty("user.dir") 
+				+ "/screenshots/" + fileName + ".png");
+
+		dest.getParentFile().mkdirs(); // create folder if not exists
+
+		java.nio.file.Files.copy(src.toPath(), dest.toPath());
+
+		System.out.println("📸 Screenshot saved: " + dest.getAbsolutePath());
+
+	} catch (Exception e) {
+		System.out.println("❌ Screenshot failed: " + e.getMessage());
+	}
+}
 	}

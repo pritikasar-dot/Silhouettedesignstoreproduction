@@ -40,7 +40,8 @@ public class ReportEmailTrigger implements ISuiteListener {
 
     // ================= RECIPIENTS =================
     private static final String TO_EMAILS = "kaspritiautomation@gmail.com,jaimin.b@magnetoitsolutions.com,gajanan@magnetoitsolutions.com,kanisha.shah@magnetoitsolutions.com,bhargav@magnetoitsolutions.com,ravi.patel@bytestechnolab.com";
-    private static final String CC_EMAILS = "priti.kasar+1@magnetoitsolutions.com";
+  // private static final String TO_EMAILS = "kaspritiautomation@gmail.com"; 
+   private static final String CC_EMAILS = "priti.kasar+1@magnetoitsolutions.com";
     private static final String BCC_EMAILS = "pritik.magneto@gmail.com";
 
     // ================= FILE PATHS =================
@@ -50,7 +51,7 @@ public class ReportEmailTrigger implements ISuiteListener {
             System.getProperty("user.dir") + "/Screenshots/";
 
     private static final String SUBJECT =
-            "🧾 Silhouette Design Store | Automation Report | Staging Site | Priti Kasar";
+            "🧾 Silhouette Design Store - Production Regression Test Report | Priti Kasar";
 
     @Override
     public void onStart(ISuite suite) {
@@ -139,6 +140,36 @@ public class ReportEmailTrigger implements ISuiteListener {
             body.append("<p style='color: #888;'>No orders were processed in this execution.</p>");
         }
         body.append("</div>");
+        // ✅ PRODUCT LINKS SECTION
+body.append("<br><div style='background-color: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;'>")
+    .append("<h3 style='margin-top: 0; color: #007bff;'>🔗 New Category - Product Links (Top 60)</h3>");
+
+java.util.List<String> productLinks = com.mystore.utility.ProductContext.getLinks();
+
+if (productLinks != null && !productLinks.isEmpty()) {
+
+    body.append("<ol>");
+
+    int count = 0;
+    for (String link : productLinks) {
+
+        if (count == 60) break;
+
+        body.append("<li>")
+            .append("<a href='").append(link).append("' target='_blank'>")
+            .append(link)
+            .append("</a></li>");
+
+        count++;
+    }
+
+    body.append("</ol>");
+
+} else {
+    body.append("<p style='color: #888;'>No product links found in execution.</p>");
+}
+
+body.append("</div>");
 
         // ✅ TEST SUMMARY
         body.append("<br><div style='background-color: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;'>")
@@ -159,8 +190,10 @@ public class ReportEmailTrigger implements ISuiteListener {
 
         // ✅ CRITICAL: Clear the context after building the body so the next suite run starts fresh
         OrderContext.clearOrders();
+        com.mystore.utility.ProductContext.clear();
 
         return body.toString();
+        
     }
 
     // ================= TEST SUMMARY =================

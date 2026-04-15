@@ -6,22 +6,14 @@ import java.time.Duration;
 import java.util.Properties;
 
 import org.apache.log4j.xml.DOMConfigurator;
-import org.openqa.selenium.By;
-import org.openqa.selenium.PageLoadStrategy;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.edge.EdgeDriver;
-import org.openqa.selenium.edge.EdgeOptions;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.*;
+import org.openqa.selenium.edge.*;
+import org.openqa.selenium.firefox.*;
 import org.openqa.selenium.remote.RemoteWebDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeSuite;
-
+import org.openqa.selenium.support.ui.*;
+import org.testng.annotations.*;
+import java.io.File;
 import io.github.bonigarcia.wdm.WebDriverManager;
 
 public class BaseClass {
@@ -64,26 +56,28 @@ public class BaseClass {
     public void launchApp() {
 
         String browser = prop.getProperty("browser").toLowerCase();
-        int implicitWait = Integer.parseInt(prop.getProperty("implicit.wait"));
         int pageLoadTimeout = Integer.parseInt(prop.getProperty("page.load.timeout"));
+
+        boolean isHeadless = browser.contains("headless");
 
         switch (browser) {
 
             case "chrome":
             case "chrome-headless":
                 WebDriverManager.chromedriver().setup();
-                driver.set(new ChromeDriver(getChromeOptions(browser.contains("headless"))));
+                driver.set(new ChromeDriver(getChromeOptions(isHeadless)));
                 break;
 
             case "firefox":
             case "firefox-headless":
                 WebDriverManager.firefoxdriver().setup();
-                driver.set(new FirefoxDriver(getFirefoxOptions(browser.contains("headless"))));
+                driver.set(new FirefoxDriver(getFirefoxOptions(isHeadless)));
                 break;
 
             case "edge":
+            case "edge-headless":
                 WebDriverManager.edgedriver().setup();
-                driver.set(new EdgeDriver(getEdgeOptions(false)));
+                driver.set(new EdgeDriver(getEdgeOptions(isHeadless)));
                 break;
 
             default:
@@ -92,27 +86,40 @@ public class BaseClass {
 
         WebDriver drv = getDriver();
 
-        drv.manage().window().maximize();
-        drv.manage().timeouts().implicitlyWait(Duration.ofSeconds(implicitWait));
+        // ===== 🔥 CRITICAL: FORCE DESKTOP VIEW =====
+drv.manage().window().setPosition(new Point(0, 0));
+drv.manage().window().setSize(new Dimension(1920, 1080));        // ===== Timeouts (NO implicit wait - avoids flakiness) =====
+        drv.manage().timeouts().implicitlyWait(Duration.ZERO);
         drv.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(pageLoadTimeout));
 
-        // Navigate
-        drv.get(prop.getProperty("url"));
+        // ===== Navigate (with retry) =====
+        String url = prop.getProperty("url");
+        loadUrlWithRetry(drv, url);
 
-        // Handle cookies
+        // ===== Handle cookies =====
         handleCookieConsent();
     }
 
     // ==============================
-    // BROWSER OPTIONS
+    // RETRY NAVIGATION (VERY IMPORTANT)
     // ==============================
+    private void loadUrlWithRetry(WebDriver driver, String url) {
+        try {
+            driver.get(url);
+        } catch (Exception e) {
+            System.out.println("⚠️ Retry loading URL...");
+            driver.get(url);
+        }
+    }
 
+    // ==============================
+    // CHROME OPTIONS (FINAL)
+    // ==============================
     private ChromeOptions getChromeOptions(boolean headless) {
         ChromeOptions options = new ChromeOptions();
 
         options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
 
-        // Stability flags (VERY IMPORTANT)
         options.addArguments("--disable-gpu");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
@@ -120,27 +127,41 @@ public class BaseClass {
 
         if (headless) {
             options.addArguments("--headless=new");
+
+            // 🔥 CRITICAL FIX (mobile issue)
             options.addArguments("--window-size=1920,1080");
+            options.addArguments("--force-device-scale-factor=1");
+
+            // 🔥 Force desktop user-agent
+            options.addArguments(
+                "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
+            );
         }
 
         return options;
     }
 
+    // ==============================
     private FirefoxOptions getFirefoxOptions(boolean headless) {
         FirefoxOptions options = new FirefoxOptions();
 
         if (headless) {
             options.addArguments("--headless");
+            options.addArguments("--width=1920");
+            options.addArguments("--height=1080");
         }
 
         return options;
     }
 
+    // ==============================
     private EdgeOptions getEdgeOptions(boolean headless) {
         EdgeOptions options = new EdgeOptions();
 
         if (headless) {
             options.addArguments("--headless=new");
+            options.addArguments("--window-size=1920,1080");
         }
 
         return options;
@@ -155,13 +176,23 @@ public class BaseClass {
             By cookieBtn = By.xpath("//button[normalize-space()='I agree']");
 
             if (!getDriver().findElements(cookieBtn).isEmpty()) {
-                WebElement element = wait.until(ExpectedConditions.elementToBeClickable(cookieBtn));
-                element.click();
+                wait.until(ExpectedConditions.elementToBeClickable(cookieBtn)).click();
                 System.out.println("✅ Cookie accepted");
             }
         } catch (Exception e) {
-            System.out.println("ℹ️ Cookie popup not present");
+            System.out.println("ℹ️ No cookie popup");
         }
+    }
+
+    // ==============================
+    // SCREENSHOT (DEBUG)
+    // ==============================
+    public void takeScreenshot(String name) {
+        try {
+            File src = ((TakesScreenshot) getDriver()).getScreenshotAs(OutputType.FILE);
+            java.nio.file.Files.copy(src.toPath(),
+                    java.nio.file.Paths.get("screenshots/" + name + ".png"));
+        } catch (Exception ignored) {}
     }
 
     // ==============================
