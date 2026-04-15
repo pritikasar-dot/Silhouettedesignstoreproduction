@@ -146,7 +146,7 @@ public class ReportEmailTrigger implements ISuiteListener {
 
     // ================= HEADER =================
     body.append("<div style='background:#1f4e79;color:white;padding:20px;border-radius:10px;'>")
-            .append("<h2>🚀 Production - Silhouette America Automation</h2>")
+            .append("<h2>🚀 Production - Silhouette Design Store Automation</h2>")
             .append("<p>Automation Execution Report</p>")
             .append("<h3>").append(status).append("</h3>")
             .append("</div><br>");
