@@ -218,7 +218,7 @@ public class ReportEmailTrigger implements ISuiteListener {
             .append("</div>");
 
     // ================= PRODUCT LINKS =================
-    body.append("<h3>🔗 Product Links</h3><div style='background:#fff;padding:10px;border-radius:8px;'>");
+    body.append("<h3>🔗 New category - Product Links (fetched first 60 products link)</h3><div style='background:#fff;padding:10px;border-radius:8px;'>");
 
     List<String> links = com.mystore.utility.ProductContext.getLinks();
 
