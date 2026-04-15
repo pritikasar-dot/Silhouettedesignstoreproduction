@@ -1,8 +1,11 @@
 package listeners;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
-
+import java.util.List;
 import javax.activation.DataHandler;
 import javax.activation.FileDataSource;
 import javax.mail.Authenticator;
@@ -111,90 +114,157 @@ public class ReportEmailTrigger implements ISuiteListener {
         }
     }
 
-    // ================= EMAIL BODY =================
-  // ================= EMAIL BODY =================
-    private String buildEmailBody(ISuite suite, Multipart multipart) {
+   private String buildEmailBody(ISuite suite, Multipart multipart) {
 
-        StringBuilder body = new StringBuilder();
-       body.append("<html><body style='margin:0;font-family:Segoe UI;'>")
+    StringBuilder body = new StringBuilder();
 
-.append("<div style='background:linear-gradient(135deg,#4facfe,#00f2fe);padding:20px;color:white;'>")
-.append("<h1>🚀 Automation Dashboard</h1>")
-.append("<p>Execution Summary Report</p>")
-.append("</div>");
+    int passed = 0, failed = 0, skipped = 0;
+    long totalTime = 0;
 
-        // ✅ NEW: MULTIPLE ORDER DETAILS SECTION
-        body.append("<div style='background-color: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;'>")
-            .append("<h3 style='margin-top: 0; color: #28a745;'>🧾 Order Confirmation(s)</h3>");
+    Map<String, List<ITestResult>> moduleMap = new HashMap<>();
 
-        java.util.List<String> allOrders = OrderContext.getAllOrders();
-        if (allOrders != null && !allOrders.isEmpty()) {
-            body.append("<ul style='list-style: none; padding-left: 0;'>");
-            for (String order : allOrders) {
-                body.append("<li style='padding: 8px; margin-bottom: 5px; background: #e9f7ef; border-left: 4px solid #28a745;'>")
-                    .append("✅ <b>").append(order).append("</b>")
-                    .append("</li>");
-            }
-            body.append("</ul>");
-        } else {
-            body.append("<p style='color: #888;'>No orders were processed in this execution.</p>");
-        }
-        body.append("</div>");
-        // ✅ PRODUCT LINKS SECTION
-body.append("<br><div style='background-color: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;'>")
-    .append("<h3 style='margin-top: 0; color: #007bff;'>🔗 New Category - Product Links (Top 60)</h3>");
+    // ================= DATA COLLECTION =================
+    for (ISuiteResult result : suite.getResults().values()) {
 
-java.util.List<String> productLinks = com.mystore.utility.ProductContext.getLinks();
+        ITestContext context = result.getTestContext();
 
-if (productLinks != null && !productLinks.isEmpty()) {
+        passed += context.getPassedTests().size();
+        failed += context.getFailedTests().size();
+        skipped += context.getSkippedTests().size();
 
-    body.append("<ol>");
+        totalTime += (context.getEndDate().getTime() - context.getStartDate().getTime());
 
-    int count = 0;
-    for (String link : productLinks) {
-
-        if (count == 60) break;
-
-        body.append("<li>")
-            .append("<a href='").append(link).append("' target='_blank'>")
-            .append(link)
-            .append("</a></li>");
-
-        count++;
+        collectByModule(context.getPassedTests(), moduleMap);
+        collectByModule(context.getFailedTests(), moduleMap);
+        collectByModule(context.getSkippedTests(), moduleMap);
     }
 
-    body.append("</ol>");
+    int total = passed + failed + skipped;
+    String status = failed > 0 ? "🔴 FAILURES DETECTED" : "🟢 ALL CLEAR";
 
-} else {
-    body.append("<p style='color: #888;'>No product links found in execution.</p>");
-}
+    body.append("<html><body style='font-family:Segoe UI;background:#f4f6f9;padding:20px;'>");
 
-body.append("</div>");
+    // ================= HEADER =================
+    body.append("<div style='background:#1f4e79;color:white;padding:20px;border-radius:10px;'>")
+            .append("<h2>🚀 Production - Silhouette America Automation</h2>")
+            .append("<p>Automation Execution Report</p>")
+            .append("<h3>").append(status).append("</h3>")
+            .append("</div><br>");
 
-        // ✅ TEST SUMMARY
-        body.append("<br><div style='background-color: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #ddd;'>")
-            .append(buildTestSummary(suite))
-            .append("</div>");
+    // ================= KPI CARDS =================
+    body.append("<div style='display:flex;gap:10px;'>");
 
-        // ✅ SCREENSHOTS
-        body.append("<br><h4 style='color: #dc3545;'>📸 Failed Test Screenshots</h4>")
-            .append("<div style='background-color: #fff; padding: 10px; border: 1px solid #f5c6cb;'>")
+    addCard(body, "Total", total, "#007bff");
+    addCard(body, "Passed", passed, "#28a745");
+    addCard(body, "Failed", failed, "#dc3545");
+    addCard(body, "Skipped", skipped, "#ffc107");
+    addCard(body, "Time (s)", totalTime / 1000, "#6c757d");
+
+    body.append("</div><br>");
+
+    // ================= CHART =================
+    int passPercent = total == 0 ? 0 : (passed * 100 / total);
+    int failPercent = total == 0 ? 0 : (failed * 100 / total);
+
+    body.append("<h3>📈 Execution Chart</h3>");
+
+    body.append("<div style='background:#ddd;border-radius:5px;'>")
+            .append("<div style='width:").append(passPercent)
+            .append("%;background:#28a745;color:white;padding:8px;'>Passed ")
+            .append(passPercent).append("%</div></div><br>");
+
+    body.append("<div style='background:#ddd;border-radius:5px;'>")
+            .append("<div style='width:").append(failPercent)
+            .append("%;background:#dc3545;color:white;padding:8px;'>Failed ")
+            .append(failPercent).append("%</div></div>");
+
+    // ================= MODULE-WISE =================
+    body.append("<h3>🧩 Module-wise Execution</h3>");
+
+    for (String module : moduleMap.keySet()) {
+
+        body.append("<div style='background:#fff;padding:10px;margin-bottom:10px;border-radius:8px;border:1px solid #ddd;'>")
+                .append("<h4>").append(module).append("</h4>");
+
+        for (ITestResult result : moduleMap.get(module)) {
+
+            long duration = (result.getEndMillis() - result.getStartMillis()) / 1000;
+
+            String color = result.getStatus() == ITestResult.SUCCESS ? "#28a745"
+                    : result.getStatus() == ITestResult.FAILURE ? "#dc3545"
+                    : "#ffc107";
+
+            body.append("<p style='margin:5px;'>")
+                    .append("<span style='color:").append(color).append(";'>●</span> ")
+                    .append(result.getMethod().getDescription())
+                    .append(" (").append(duration).append("s)");
+
+            if (result.getStatus() == ITestResult.FAILURE && result.getThrowable() != null) {
+                body.append("<br><span style='color:red;font-size:12px;'>")
+                        .append(result.getThrowable().getMessage())
+                        .append("</span>");
+            }
+
+            body.append("</p>");
+        }
+
+        body.append("</div>");
+    }
+
+    // ================= SCREENSHOTS =================
+    body.append("<h3>📸 Failed Screenshots</h3>")
+            .append("<div>")
             .append(attachScreenshots(multipart))
             .append("</div>");
 
-        // FOOTER
-        body.append("<hr><p style='font-size: 11px; color: #777;'>")
-            .append("This is an automatically generated email from the <b>Silhouette Automation Framework</b>.<br>")
-            .append("Executed by: <b>Priti Kasar</b>")
-            .append("</p></div></body></html>");
+    // ================= PRODUCT LINKS =================
+    body.append("<h3>🔗 Product Links</h3><div style='background:#fff;padding:10px;border-radius:8px;'>");
 
-        // ✅ CRITICAL: Clear the context after building the body so the next suite run starts fresh
-        OrderContext.clearOrders();
-        com.mystore.utility.ProductContext.clear();
+    List<String> links = com.mystore.utility.ProductContext.getLinks();
 
-        return body.toString();
-        
+    if (links != null && !links.isEmpty()) {
+        body.append("<ol>");
+        for (String link : links) {
+            body.append("<li><a href='").append(link).append("'>")
+                    .append(link).append("</a></li>");
+        }
+        body.append("</ol>");
+    } else {
+        body.append("<p>No links captured</p>");
     }
+
+    body.append("</div>");
+
+    // ================= ORDERS =================
+    body.append("<h3>🧾 Orders</h3><div style='background:#fff;padding:10px;border-radius:8px;'>");
+
+    List<String> orders = OrderContext.getAllOrders();
+
+    if (orders != null && !orders.isEmpty()) {
+        body.append("<ul>");
+        for (String o : orders) {
+            body.append("<li>").append(o).append("</li>");
+        }
+        body.append("</ul>");
+    } else {
+        body.append("<p>No orders created</p>");
+    }
+
+    body.append("</div>");
+
+    // ================= FOOTER =================
+    body.append("<br><p style='font-size:12px;color:gray;'>")
+            .append("Executed by: <b>Priti Kasar</b><br>")
+            .append("Enterprise Automation Reporting System")
+            .append("</p>");
+
+    body.append("</body></html>");
+
+    OrderContext.clearOrders();
+    com.mystore.utility.ProductContext.clear();
+
+    return body.toString();
+}
 
     // ================= TEST SUMMARY =================
     private String buildTestSummary(ISuite suite) {
@@ -234,7 +304,25 @@ body.append("</div>");
 
         sb.append("</ul>");
     }
+private void addCard(StringBuilder body, String title, long value, String color) {
 
+    body.append("<div style='flex:1;background:")
+            .append(color)
+            .append(";color:white;padding:15px;border-radius:8px;text-align:center;'>")
+            .append("<h3>").append(value).append("</h3>")
+            .append("<p>").append(title).append("</p>")
+            .append("</div>");
+}
+private void collectByModule(IResultMap results, Map<String, List<ITestResult>> map) {
+
+    for (ITestResult result : results.getAllResults()) {
+
+        String className = result.getTestClass().getName();
+        String module = className.substring(className.lastIndexOf(".") + 1);
+
+        map.computeIfAbsent(module, k -> new ArrayList<>()).add(result);
+    }
+}
     // ================= SCREENSHOTS =================
     private String attachScreenshots(Multipart multipart) {
 
